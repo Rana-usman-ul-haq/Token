@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.0;
 
 
 interface IERC20 {
@@ -675,6 +675,7 @@ contract Sevi is Context, IERC20, Ownable {
     mapping (address => mapping (address => uint256)) private _allowances;
     mapping (address => bool) private _isExcludedFromFee;
     mapping (address => bool) private _isExcluded;
+    mapping(address => bool) public isBlackListed;
     address[] private _excluded;
    
     uint256 private constant MAX = ~uint256(0);
@@ -698,7 +699,7 @@ contract Sevi is Context, IERC20, Ownable {
 
     uint256 public _marketingFee = 7;
     uint256 private _previousMarketingFee = _marketingFee;
-    address payable public marketingWallet = payable(0x6710C6c2D1064D637D372697cA31CcC9a04CB841);
+    address payable public marketingWallet = payable(0x3BB222C56357967F1DE15D74C21B6f3059Ef3dBb);
 
     IUniswapV2Router02 public  uniswapV2Router;
     address public  uniswapV2Pair;
@@ -957,6 +958,7 @@ contract Sevi is Context, IERC20, Ownable {
     ) private {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
+        require(isBlackListed[from] != true && isBlackListed[to] != true, "Account is Blacklisted");
 
         // is the token balance of this contract address over the min number of
         // tokens that we need to initiate a swap + liquidity lock?
@@ -1161,6 +1163,14 @@ contract Sevi is Context, IERC20, Ownable {
     function setSwapAndLiquifyEnabled(bool _enabled) public onlyOwner {
         swapAndLiquifyEnabled = _enabled;
         emit SwapAndLiquifyEnabledUpdated(_enabled);
+    }
+
+    function blackListAccount(address account) external onlyOwner {
+        isBlackListed[account] = true;
+    }
+
+    function unBlackListAccount(address account) external onlyOwner {
+        isBlackListed[account] = false;
     }
 
      //to recieve ETH from uniswapV2Router when swaping
